@@ -14,9 +14,14 @@ if (NOT Qt6_FOUND)
     find_package(Qt5 5.15 COMPONENTS Core REQUIRED)
 endif()
 
-add_library(${PROJECT_NAME} STATIC "qmidiin.cpp" "qmidimapper.cpp" "qmidiout.cpp" "qmidipianoroll.cpp")
+add_library(${PROJECT_NAME}
+    STATIC  "qmidiin.cpp"
+            "qmidimessage.cpp"
+            "qmidimapper.cpp"
+            "qmidiout.cpp"
+            "qmidipianoroll.cpp")
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/libs/rtmidi)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/libs/rtmidi)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(MMLIB winmm)
@@ -34,4 +39,4 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     target_compile_definitions(${PROJECT_NAME} PUBLIC __MACOSX_CORE__)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${MMLIB} Qt::Core Qt::Widgets)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${MMLIB} rtmidi Qt::Core Qt::Widgets)
