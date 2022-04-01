@@ -35,7 +35,7 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         target_compile_definitions(${PROJECT_NAME} PUBLIC __LINUX_ALSA__)
     endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    set(MMLIB CoreMidi CoreAudio CoreFoundation)
+    # set(MMLIB CoreMidi CoreAudio CoreFoundation)
     target_compile_definitions(${PROJECT_NAME} PUBLIC __MACOSX_CORE__)
 endif()
 
