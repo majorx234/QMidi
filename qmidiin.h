@@ -19,6 +19,7 @@ public:
     void closePort();
     bool isPortOpen();
     void setIgnoreTypes(bool sysex = true, bool time = true, bool sense = true);
+    void setBufferSize(unsigned int size, unsigned int count);
 private:
     void onMidiMessageReceive(QMidiMessage *msg);
     static void callback( double deltatime, std::vector< unsigned char > *message, void *userData );

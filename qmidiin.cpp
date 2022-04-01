@@ -6,6 +6,10 @@ QMidiIn::QMidiIn(QObject *parent) : QObject(parent),
     _midiIn->setCallback(&QMidiIn::callback, this);
 }
 
+void QMidiIn::setBufferSize(unsigned int size, unsigned int count){
+    _midiIn->setBufferSize(size, count);
+}
+
 QStringList QMidiIn::getPorts()
 {
     //TODO: make this static
