@@ -2,41 +2,67 @@ cmake_minimum_required(VERSION 3.16.0 FATAL_ERROR)
 
 project(QMidi LANGUAGES CXX)
 
-option(USE_JACK "Use JACK on Linux else ALSA." OFF)
+option(USE_JACK "Use JACK on Linux else ALSA." ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 COMPONENTS Core Widgets)
-if (NOT Qt6_FOUND)
-    find_package(Qt5 5.15 COMPONENTS Core Widgets REQUIRED)
-endif()
+include(GNUInstallDirs)
 
-add_library(${PROJECT_NAME}
-    STATIC  "qmidiin.cpp"
-            "qmidimessage.cpp"
-            "qmidimapper.cpp"
-            "qmidiout.cpp"
-            "qmidipianoroll.cpp")
+find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(RTMIDI REQUIRED rtmidi)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/libs/rtmidi)
+file(GLOB QMIDI_SOURCES_FILES
+    ${PROJECT_SOURCE_DIR}/*.cpp)
+file(GLOB QMIDI_HEADERS_FILES
+    ${PROJECT_SOURCE_DIR}/*.h)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(MMLIB winmm)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC __WINDOWS_MM__)
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    if(${USE_JACK})
-        set(MMLIB jack)
-        target_compile_definitions(${PROJECT_NAME} PUBLIC __LINUX_JACK__)
-    else()
-        set(MMLIB asound)
-        target_compile_definitions(${PROJECT_NAME} PUBLIC __LINUX_ALSA__)
-    endif()
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    # set(MMLIB CoreMidi CoreAudio CoreFoundation)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC __MACOSX_CORE__)
-endif()
+QT6_WRAP_CPP(QMIDI_HEADERS_MOCrcs ${QMIDI_HEADERS_FILES})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${MMLIB} rtmidi Qt::Core Qt::Widgets)
+add_library(${PROJECT_NAME} SHARED)
+target_sources(${PROJECT_NAME}
+ PRIVATE 
+  ${QMIDI_SOURCES_FILES}
+  ${QMIDI_HEADERS_MOCrcs}
+  ${QMIDI_HEADERS_FILES}
+)
+target_include_directories(${PROJECT_NAME}
+ PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
+ PUBLIC
+  ${RTMIDI_INCLUDE_DIRS}
+)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>/${PROJECT_NAME})
+target_compile_options(${PROJECT_NAME}
+ PUBLIC
+  ${RT_MIDI_CFLAGS_OTHER}
+)
+
+set(MMLIB jack)
+   target_compile_definitions(${PROJECT_NAME} PUBLIC __LINUX_JACK__)
+#   target_compile_definitions(${PROJECT_NAME} PUBLIC __LINUX_ALSA__)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${MMLIB} ${RTMIDI_LIBRARIES} Qt::Core Qt::Widgets)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${QMIDI_HEADERS_FILES}")
+
+install(TARGETS
+    ${PROJECT_NAME}
+    EXPORT qmidiConfig
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+)
+
+export(TARGETS ${PROJECT_NAME}
+    NAMESPACE qmidi::
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/qmidiConfig.cmake"
+)
+
+install(EXPORT qmidiConfig
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/qmidi/cmake"
+    NAMESPACE qmidi::
+)
